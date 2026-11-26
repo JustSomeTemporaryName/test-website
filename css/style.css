@@ -1,0 +1,67 @@
+:root{
+  color-scheme:light;
+  --bg:#f6f6f4; --fg:#0a0a0a; --mute:#8a8a86; --line:#dcdcd8; --accent:#ff4d00;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"Space Grotesk",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box;margin:0}
+body{height:100%;background:var(--bg);color:var(--fg);font-family:var(--mono);overflow:hidden;user-select:none;-webkit-user-select:none}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+header{position:fixed;z-index:20;left:0;right:0;top:env(safe-area-inset-top,0px);display:flex;justify-content:space-between;align-items:center;padding:16px 28px}
+.l,.r{display:flex;align-items:center;gap:26px}
+.logo{width:34px;height:34px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:var(--mono);font-weight:700}
+header a{color:var(--mute);text-decoration:none;cursor:pointer}
+header a{transition:color .15s}header a.on{color:var(--fg)}header a:hover{color:var(--accent)!important}
+.cart{background:var(--fg);color:var(--bg)!important;padding:10px 16px;border-radius:8px;transition:background .15s}.cart:hover{background:var(--accent);color:#fff!important}
+.tree{position:fixed;z-index:20;left:28px;top:calc(74px + env(safe-area-inset-top,0px));color:var(--mute);display:flex;flex-direction:column;gap:12px;padding-left:16px;border-left:1px solid var(--line)}
+.tree span{cursor:pointer;transition:color .15s}.tree span:hover{color:var(--accent)!important}.tree span.on{color:var(--fg)}
+
+.stage{position:fixed;inset:0;overflow:hidden;touch-action:pan-y}
+/* Blur is one animated number per product: --p (0 = sharp ... 1 = fully blurred) and --h (0 = hidden, 1 = shown).
+   Layers: .l0 = sharp, .l1/.l2/.l3 = pre-baked blur steps (1/3, 2/3, full). Each layer's opacity is computed from --p,
+   so the product passes through every blur step in turn instead of one sharp->blurry crossfade. */
+@property --p{syntax:"<number>";inherits:false;initial-value:0}
+@property --h{syntax:"<number>";inherits:false;initial-value:0}
+.item{position:absolute;left:46%;top:41%;display:block;pointer-events:none;
+  --g:clamp(0,calc(var(--p)*8),1); /* lower layers appear at once as the move starts (no halo pop) */
+  transition:transform .9s cubic-bezier(.2,.8,.2,1),--p .9s cubic-bezier(.35,0,.3,1),--h .3s ease;will-change:transform,opacity}
+.l0{opacity:calc(var(--h)*clamp(0,calc(1 - var(--p)*3),1))}
+.l1{opacity:calc(var(--h)*min(var(--g),clamp(0,calc(2 - var(--p)*3),1)))}
+.l2{opacity:calc(var(--h)*min(var(--g),clamp(0,calc(3 - var(--p)*3),1)))}
+.l3{opacity:calc(var(--h)*var(--g))}
+
+.panel{position:fixed;z-index:20;right:28px;bottom:76px;width:min(380px,calc(100vw - 56px))}
+.panel{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.cfg .panel{transform:translateX(calc(-100vw + 100% + 56px))}
+.panel h1{font-family:"Tomorrow",var(--mono);font-weight:400;font-size:clamp(34px,4.4vw,56px);letter-spacing:-.01em;line-height:1;margin-bottom:22px}
+.specs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.specs div{border-top:1px solid var(--fg);padding-top:8px}
+.specs b{display:block;font-family:var(--mono);font-weight:400;font-size:20px}
+.specs small{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.chip{display:inline-block;border:1px solid var(--line);padding:5px 9px;font-size:12px;color:#444;margin-bottom:18px}
+.panel p{color:var(--mute);font-size:13px;line-height:1.6;margin-bottom:22px}
+.add{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--fg);color:var(--bg);border:0;border-radius:6px;padding:20px 18px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:background .2s}
+.add:hover{background:var(--accent)}
+.add s{opacity:.55;margin-right:10px;font-size:13px}.add b{font-weight:700}
+
+.pager{position:fixed;z-index:20;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border-radius:30px;padding:4px}
+.pager span{cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;color:var(--mute)}
+.pager span{transition:color .15s}.pager span:hover{background:var(--bg);color:var(--accent)}
+.pager em{font-style:normal;padding:0 8px}
+
+@media (max-width:700px){
+  header{padding:12px 16px}.l,.r{gap:14px}.hide-m{display:none}
+  .tree{display:none}
+  .item{left:50%;top:34%}
+  .panel{right:16px;left:16px;width:auto;bottom:74px}
+  .cfg .panel{transform:none}
+  .panel h1{font-size:30px;margin-bottom:12px}
+  .specs{margin-bottom:12px}.specs b{font-size:16px}
+  .panel p{display:none}.chip{margin-bottom:12px}
+  .add{padding:16px}
+}
