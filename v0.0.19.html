@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BRAND — Objects</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Tomorrow:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f6f4; --fg:#0a0a0a; --mute:#8a8a86; --line:#dcdcd8; --accent:#ff4d00;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"Space Grotesk",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box;margin:0}
+body{height:100%;background:var(--bg);color:var(--fg);font-family:var(--mono);overflow:hidden;user-select:none;-webkit-user-select:none}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+
+header{position:fixed;z-index:20;left:0;right:0;top:env(safe-area-inset-top,0px);display:flex;justify-content:space-between;align-items:center;padding:16px 28px}
+.l,.r{display:flex;align-items:center;gap:26px}
+.logo{width:34px;height:34px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:var(--mono);font-weight:700}
+header a{color:var(--mute);text-decoration:none;cursor:pointer}
+header a{transition:color .15s}header a.on{color:var(--fg)}header a:hover{color:var(--accent)!important}
+.cart{background:var(--fg);color:var(--bg)!important;padding:10px 16px;border-radius:8px;transition:background .15s}.cart:hover{background:var(--accent);color:#fff!important}
+.tree{position:fixed;z-index:20;left:28px;top:calc(74px + env(safe-area-inset-top,0px));color:var(--mute);display:flex;flex-direction:column;gap:12px;padding-left:16px;border-left:1px solid var(--line)}
+.tree span{cursor:pointer;transition:color .15s}.tree span:hover{color:var(--accent)!important}.tree span.on{color:var(--fg)}
+
+.stage{position:fixed;inset:0;overflow:hidden;touch-action:pan-y}
+/* Blur is one animated number per product: --p (0 = sharp ... 1 = fully blurred) and --h (0 = hidden, 1 = shown).
+   Layers: .l0 = sharp, .l1/.l2/.l3 = pre-baked blur steps (1/3, 2/3, full). Each layer's opacity is computed from --p,
+   so the product passes through every blur step in turn instead of one sharp->blurry crossfade. */
+@property --p{syntax:"<number>";inherits:false;initial-value:0}
+@property --h{syntax:"<number>";inherits:false;initial-value:0}
+.item{position:absolute;left:46%;top:41%;display:block;pointer-events:none;
+  --g:clamp(0,calc(var(--p)*8),1); /* lower layers appear at once as the move starts (no halo pop) */
+  transition:transform .9s cubic-bezier(.2,.8,.2,1),--p .9s cubic-bezier(.35,0,.3,1),--h .3s ease;will-change:transform,opacity}
+.l0{opacity:calc(var(--h)*clamp(0,calc(1 - var(--p)*3),1))}
+.l1{opacity:calc(var(--h)*min(var(--g),clamp(0,calc(2 - var(--p)*3),1)))}
+.l2{opacity:calc(var(--h)*min(var(--g),clamp(0,calc(3 - var(--p)*3),1)))}
+.l3{opacity:calc(var(--h)*var(--g))}
+
+.panel{position:fixed;z-index:20;right:28px;bottom:76px;width:min(380px,calc(100vw - 56px))}
+.panel{transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.cfg .panel{transform:translateX(calc(-100vw + 100% + 56px))}
+.panel h1{font-family:"Tomorrow",var(--mono);font-weight:400;font-size:clamp(34px,4.4vw,56px);letter-spacing:-.01em;line-height:1;margin-bottom:22px}
+.specs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.specs div{border-top:1px solid var(--fg);padding-top:8px}
+.specs b{display:block;font-family:var(--mono);font-weight:400;font-size:20px}
+.specs small{font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.chip{display:inline-block;border:1px solid var(--line);padding:5px 9px;font-size:12px;color:#444;margin-bottom:18px}
+.panel p{color:var(--mute);font-size:13px;line-height:1.6;margin-bottom:22px}
+.add{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--fg);color:var(--bg);border:0;border-radius:6px;padding:20px 18px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:background .2s}
+.add:hover{background:var(--accent)}
+.add s{opacity:.55;margin-right:10px;font-size:13px}.add b{font-weight:700}
+
+.pager{position:fixed;z-index:20;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border-radius:30px;padding:4px}
+.pager span{cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;color:var(--mute)}
+.pager span{transition:color .15s}.pager span:hover{background:var(--bg);color:var(--accent)}
+.pager em{font-style:normal;padding:0 8px}
+
+@media (max-width:700px){
+  header{padding:12px 16px}.l,.r{gap:14px}.hide-m{display:none}
+  .tree{display:none}
+  .item{left:50%;top:34%}
+  .panel{right:16px;left:16px;width:auto;bottom:74px}
+  .cfg .panel{transform:none}
+  .panel h1{font-size:30px;margin-bottom:12px}
+  .specs{margin-bottom:12px}.specs b{font-size:16px}
+  .panel p{display:none}.chip{margin-bottom:12px}
+  .add{padding:16px}
+}
+</style>
+</head>
+<body>
+<header class="mono">
+  <div class="l"><div class="logo">B</div><a class="on" id="home">All objects</a><a class="hide-m">Series A</a><a class="hide-m">Series B</a><a class="hide-m">Limited</a></div>
+  <div class="r"><a class="hide-m">About</a><a class="cart" id="cart">Cart (0)</a></div>
+</header>
+<div class="tree mono" id="tree"></div>
+
+<main class="stage" id="stage"></main>
+
+<aside class="panel">
+  <h1 id="name"></h1>
+  <div class="specs" id="specs"></div>
+  <span class="chip" id="chip"></span>
+  <p id="desc"></p>
+  <button class="add" id="add"><span id="lbl">select</span><span><s id="old"></s><b id="price"></b></span></button>
+</aside>
+
+<div class="pager mono"><span id="prev">‹</span><em id="count"></em><span id="next">›</span></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const P=[
+ {n:"OB-001",w:440,h:400,c1:"#e4e4e2",c2:"#d4d4d2",e:"#b9b9b6",tc:"#777",chip:"placeholder",d:"Placeholder description. A thing you made that you couldn’t find anywhere else.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€79,95",o:"€114,95"},
+ {n:"OB-002",w:440,h:400,c1:"#4a4a4a",c2:"#222222",e:"#0c0c0c",tc:"#bbbbbb",chip:"placeholder",d:"Placeholder description. Materials, dimensions and the story behind it go here.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€89,95",o:""},
+ {n:"OB-003",w:440,h:400,c1:"#f0efe9",c2:"#e1e0d8",e:"#c4c3ba",tc:"#888888",chip:"limited",d:"Placeholder description. Limited run, numbered by hand.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€120,00",o:""},
+ {n:"OB-004",w:440,h:400,c1:"#2b2b2b",c2:"#101010",e:"#000000",tc:"#aaaaaa",chip:"placeholder",d:"Placeholder description. Small, useful, slightly strange.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€60,00",o:""},
+ {n:"OB-005",w:440,h:400,c1:"#ff6a2b",c2:"#ff4d00",e:"#c23a00",tc:"#ffffff",chip:"new",d:"Placeholder description. Coming soon.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€150,00",o:""},
+ {n:"OB-006",w:440,h:400,c1:"#d9dde0",c2:"#c3c8cc",e:"#a2a8ad",tc:"#666677",chip:"placeholder",d:"Placeholder description. One more thing.",s:[["44×40","CM"],["3.3","MM"],["CNC","EDGE"],["GLASS","MAT"]],p:"€95,00",o:""}
+];
+// the two ways to get a product (kit = base price, multiplier is a placeholder)
+const V=[
+ {k:"Kit",d:"Everything in the box, printed parts and hardware included. You assemble it. Choose your options in the configurator.",btn:"Customize",m:1},
+ {k:"Hardware only",d:"Just the electronics and hardware. You 3D-print the other parts yourself (files included).",btn:"Add to cart",m:.6}
+];
+const stage=$("stage"),EDGE=9,LV=3; // LV = number of blur steps between sharp and fully blurred
+let cur=0,k=0,cart=0,mode=0,v=0;
+const mk=l=>{const c=document.createElement("canvas");c.className="item l"+(l||0);stage.appendChild(c);return c};
+const mkB=()=>Array.from({length:LV},(_,i)=>mk(i+1));
+const items=P.map(()=>mk()),blurs=P.map(mkB);
+const kit={s:mk(),b:mkB()},hw={s:mk(),b:mkB()};
+
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+
+/* Every view is drawn ONCE into a bitmap; sliding only moves bitmaps (smooth in Firefox).
+   kind 0 = the product as shown in the slider, 1 = kit (loose parts), 2 = hardware only (small board). */
+function draw(cv,p,kind){
+  const dpr=Math.min(window.devicePixelRatio||1,2),W=p.w,H=p.h;
+  const hw_=.3536*(W+H)*k,hh=.1768*(W+H)*k,m=70*k,bt=140*k;
+  const cw=Math.ceil(2*(hw_+m)),ch=Math.ceil(m+2*hh+bt),cx=cw/2,cy=m+hh;
+  cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);
+  cv.style.width=cw+"px";cv.style.height=ch+"px";
+  cv.style.marginLeft=(-cx)+"px";cv.style.marginTop=(-cy)+"px";
+  const c=cv.getContext("2d");
+  const set=dy=>c.setTransform(dpr*.7071*k,dpr*-.3536*k,dpr*.7071*k,dpr*.3536*k,dpr*cx,dpr*(cy+dy));
+  c.clearRect(0,0,cv.width,cv.height);
+  const col=kind===2?{c1:"#3d4044",c2:"#2a2d30",e:"#141618",tc:"#999"}:p;
+  const pcs=kind===0?[[0,0,W,H]]:kind===1?[[0,-.2*H,.9*W,.5*H],[-.3*W,.33*H,.3*W,.28*H],[.18*W,.33*H,.5*W,.28*H]]:[[0,0,.55*W,.42*H]];
+  pcs.sort((a,b)=>(a[1]-a[0])-(b[1]-b[0]));
+  // soft shadows (shapes drawn far off-canvas, only the blurred shadow lands here)
+  set(-4000);
+  c.shadowColor="rgba(0,0,0,.16)";c.shadowBlur=24*k*dpr;c.shadowOffsetY=(4000+30*k)*dpr;c.fillStyle="#000";
+  pcs.forEach(q=>{rr(c,q[0]-q[2]/2,q[1]-q[3]/2,q[2],q[3],14);c.fill()});
+  c.shadowColor="transparent";c.shadowBlur=0;c.shadowOffsetY=0;
+  pcs.forEach(q=>{
+    const x=q[0]-q[2]/2,y=q[1]-q[3]/2,w=q[2],h=q[3];
+    c.fillStyle=col.e;
+    for(let d=EDGE;d>=1;d--){set(d*k);rr(c,x,y,w,h,14);c.fill()}
+    set(0);rr(c,x,y,w,h,14);
+    const g=c.createLinearGradient(x,y,x+w,y+h);g.addColorStop(0,col.c1);g.addColorStop(1,col.c2);
+    c.fillStyle=g;c.fill();c.lineWidth=1.2/k;c.strokeStyle="rgba(255,255,255,.35)";c.stroke();
+  });
+  if(kind===0){c.font="13px 'JetBrains Mono',monospace";c.textAlign="right";c.fillStyle=p.tc;c.globalAlpha=.75;c.fillText(p.n,W/2-28,H/2-20);c.globalAlpha=1}
+  if(kind===2){c.fillStyle="#d8d8cf";[[-.12,-.06,.1,.1],[.04,.02,.07,.07],[.13,-.07,.05,.05]].forEach(q=>c.fillRect(q[0]*W,q[1]*H,q[2]*W,q[3]*H))}
+}
+// blurred copies, baked once: LV steps from slightly to fully blurred (b is an array, b[0] = least blurred)
+function bake(b,s){
+  b.forEach((cv,i)=>{
+    const l=i+1,r=l===1?1:.5; // the blurrier steps are soft anyway, so half-size bitmaps (less memory)
+    cv.width=Math.ceil(s.width*r);cv.height=Math.ceil(s.height*r);
+    cv.style.width=s.style.width;cv.style.height=s.style.height;cv.style.marginLeft=s.style.marginLeft;cv.style.marginTop=s.style.marginTop;
+    const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);
+    const full=Math.max(1.5,3.5*k*(s.width/parseFloat(s.style.width))), px=full*l/LV*r; // full = the old single blur amount
+    if("filter" in c){c.filter="blur("+px+"px)";c.drawImage(s,0,0,cv.width,cv.height);c.filter="none"}
+    else{const t=document.createElement("canvas"),f=Math.pow(2,l);t.width=Math.ceil(s.width/f);t.height=Math.ceil(s.height/f);const tc=t.getContext("2d");tc.imageSmoothingQuality="high";tc.drawImage(s,0,0,t.width,t.height);c.imageSmoothingQuality="high";c.drawImage(t,0,0,cv.width,cv.height)}
+  });
+}
+// Kit / Hardware drawings for the current product. Heavy (draw + blur steps), so layout() prepares them in the
+// background once the slider has settled (prepX); enter() then has nothing left to compute and the slide stays smooth.
+let prepKey="",prepT;
+const xKey=()=>cur+"@"+k;
+function drawX(){draw(kit.s,P[cur],1);bake(kit.b,kit.s);draw(hw.s,P[cur],2);bake(hw.b,hw.s);prepKey=xKey()}
+function prepX(){
+  clearTimeout(prepT);
+  prepT=setTimeout(()=>{
+    if(mode||prepKey===xKey())return;
+    const key=xKey();
+    draw(kit.s,P[cur],1);bake(kit.b,kit.s);
+    prepT=setTimeout(()=>{if(mode||xKey()!==key)return;draw(hw.s,P[cur],2);bake(hw.b,hw.s);prepKey=key},50); // second job in its own task
+  },1000);
+}
+
+// st: 1 sharp, 2 blurred, 0 hidden. Only --p/--h are set here; CSS (.l0-.l3) turns them into layer opacities.
+function put(s,b,x,y,sc,st,z){
+  const t="translate("+x+"px,"+y+"px)"+(sc!==1?" scale("+sc+")":"");
+  [s,...b].forEach((el,i)=>{
+    el.style.transform=t;el.style.zIndex=z*10+LV+1-i; // sharp on top, then least blurred ... most blurred
+    el.style.setProperty("--p",st===1?0:1);el.style.setProperty("--h",st?1:0);
+  });
+}
+const hide=(s,b)=>[s,...b].forEach(el=>el.style.setProperty("--h",0));
+const fmt=x=>"€"+x.toFixed(2).replace(".",",");
+const base=p=>parseFloat(p.p.slice(1).replace(",","."));
+
+function layout(force){
+  const W=stage.clientWidth,H=stage.clientHeight;
+  const nk=Math.round((W<700?Math.min(W/900,H/700):Math.min(W/1250,H/700))*100)/100;
+  if(force||nk!==k){k=nk;if(force)prepKey="";items.forEach((cv,i)=>draw(cv,P[i],0));blurs.forEach((b,i)=>bake(b,items[i]));if(mode)drawX()}
+  const gap=640*k;
+  if(!mode){
+    items.forEach((cv,i)=>{const o=i-cur,a=Math.abs(o);put(cv,blurs[i],o*gap*.7071,-o*gap*.3536,1,o===0?1:a<=2?2:0,10-a)});
+    // options wait off-screen at the bottom right (they slide back there when leaving)
+    [kit,hw].forEach((e,j)=>put(e.s,e.b,(j+2)*gap*.7071,(j+2)*gap*.3536,1,0,0));
+    prepX();
+  }else{
+    items.forEach((cv,i)=>{if(i!==cur)hide(cv,blurs[i])});
+    // row on the product's OTHER axis (down-right / up-left): [main product, kit, hardware], centre = v+1.
+    // The main product sits one step up-left, blurred; clicking it goes back.
+    [{s:items[cur],b:blurs[cur]},kit,hw].forEach((e,j)=>{const o=j-(v+1),a=Math.abs(o);
+      put(e.s,e.b,o*gap*.7071,o*gap*.3536,o===0?1.1:1,o===0?1:a<=2?2:0,10-a)});
+  }
+  panel();
+}
+function panel(){
+  const p=P[cur];
+  $("name").textContent=p.n;
+  document.body.classList.toggle("cfg",!!mode);
+  $("home").textContent=mode?"← All objects":"All objects";
+  $("specs").style.display=mode?"none":"";
+  if(!mode){
+    $("chip").textContent=p.chip;$("desc").textContent=p.d;$("lbl").textContent="select";
+    $("price").textContent=p.p;$("old").textContent=p.o;
+    $("specs").innerHTML=p.s.map(s=>"<div><b>"+s[0]+"</b><small>"+s[1]+"</small></div>").join("");
+    $("tree").innerHTML='<span class="on">Filtering</span><span>All</span><span>Series A</span><span>Series B</span>';
+    $("count").textContent=(cur+1)+" of "+P.length;
+  }else{
+    const x=V[v];
+    $("chip").textContent=x.k;$("desc").textContent=x.d;$("lbl").textContent=x.btn;
+    $("price").textContent=fmt(base(p)*x.m);$("old").textContent="";
+    $("tree").innerHTML='<span class="on">Version</span>'+V.map((y,j)=>'<span data-v="'+j+'"'+(j===v?' class="on"':'')+'>'+y.k+'</span>').join("");
+    $("count").textContent=(v+1)+" of "+V.length;
+  }
+}
+function go(i){cur=Math.max(0,Math.min(P.length-1,i));layout()}
+function setV(j){v=Math.max(0,Math.min(V.length-1,j));layout()}
+const step=d=>mode?setV(v+d):go(cur+d);
+const optL=()=>[kit,hw].flatMap(e=>[e.s,...e.b]);
+function enter(){
+  mode=1;v=0;if(prepKey!==xKey())drawX();
+  optL().forEach(el=>el.style.transition=""); // options slide in from where layout() parked them
+  layout();
+}
+function back(){
+  mode=0;
+  // options slide out to the bottom right and only fade once they are mostly gone
+  optL().forEach(el=>el.style.transition="transform .9s cubic-bezier(.2,.8,.2,1),--p .9s cubic-bezier(.35,0,.3,1),--h .3s ease .55s");
+  layout();
+}
+
+$("prev").onclick=()=>step(-1);$("next").onclick=()=>step(1);
+$("home").onclick=()=>{if(mode)back()};
+$("tree").onclick=e=>{const t=e.target.closest("[data-v]");if(t&&mode)setV(+t.dataset.v)};
+$("add").onclick=()=>{
+  if(!mode){enter();return}
+  const l=$("lbl");
+  if(V[v].btn==="Add to cart"){cart++;$("cart").textContent="Cart ("+cart+")";l.textContent="Added ✓"}
+  else l.textContent="Configurator coming soon";
+  setTimeout(panel,1400);
+};
+addEventListener("keydown",e=>{
+  if(e.key==="ArrowRight"||e.key==="ArrowDown")step(1);
+  if(e.key==="ArrowLeft"||e.key==="ArrowUp")step(-1);
+  if(e.key==="Escape"&&mode)back();
+});
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(layout,120)});
+
+// click a product: pixel hit-test so transparent areas don't count
+stage.addEventListener("click",e=>{
+  const c=mode?v+1:cur;
+  const L=(mode?[items[cur],kit.s,hw.s].map((s,j)=>({s,j})):items.map((s,j)=>({s,j})).filter(x=>Math.abs(x.j-cur)<=2))
+    .sort((a,b)=>Math.abs(a.j-c)-Math.abs(b.j-c));
+  for(const it of L){
+    const cv=it.s,r=cv.getBoundingClientRect();
+    const x=Math.floor((e.clientX-r.left)/r.width*cv.width),y=Math.floor((e.clientY-r.top)/r.height*cv.height);
+    if(x<0||y<0||x>=cv.width||y>=cv.height)continue;
+    if(cv.getContext("2d").getImageData(x,y,1,1).data[3]>20){
+      if(it.j===c){if(!mode)enter()}else if(mode){if(it.j===0)back();else setV(it.j-1)}else go(it.j);
+      return;
+    }
+  }
+});
+let sx=null;
+stage.addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
+stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40)step(dx<0?1:-1);sx=null});
+let lock=false;
+stage.addEventListener("wheel",e=>{if(lock)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(Math.abs(d)<12)return;lock=true;step(d>0?1:-1);setTimeout(()=>lock=false,500)},{passive:true});
+
+layout(true);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>layout(true));
+</script>
+</body>
+</html>
