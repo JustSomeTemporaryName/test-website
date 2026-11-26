@@ -173,6 +173,7 @@ function back(){
 
 $("prev").onclick=()=>step(-1);$("next").onclick=()=>step(1);
 $("home").onclick=()=>{if(mode)back()};
+$("bk").onclick=()=>{if(mode)back()};
 $("tree").onclick=e=>{const t=e.target.closest("[data-v]");if(t&&mode)setV(+t.dataset.v)};
 $("add").onclick=()=>{
   if(!mode){enter();return}

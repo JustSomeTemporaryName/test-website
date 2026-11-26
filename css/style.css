@@ -16,10 +16,10 @@ header{position:fixed;z-index:20;left:0;right:0;top:env(safe-area-inset-top,0px)
 .l,.r{display:flex;align-items:center;gap:26px}
 .logo{width:34px;height:34px;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:var(--mono);font-weight:700}
 header a{color:var(--mute);text-decoration:none;cursor:pointer}
-header a{transition:color .15s}header a.on{color:var(--fg)}header a:hover{color:var(--accent)!important}
-.cart{background:var(--fg);color:var(--bg)!important;padding:10px 16px;border-radius:8px;transition:background .15s}.cart:hover{background:var(--accent);color:#fff!important}
+header a{transition:color .15s}header a.on{color:var(--fg)}
+.cart{background:var(--fg);color:var(--bg)!important;padding:10px 16px;border-radius:8px;transition:background .15s}
 .tree{position:fixed;z-index:20;left:28px;top:calc(74px + env(safe-area-inset-top,0px));color:var(--mute);display:flex;flex-direction:column;gap:12px;padding-left:16px;border-left:1px solid var(--line)}
-.tree span{cursor:pointer;transition:color .15s}.tree span:hover{color:var(--accent)!important}.tree span.on{color:var(--fg)}
+.tree span{cursor:pointer;transition:color .15s}.tree span.on{color:var(--fg)}
 
 .stage{position:fixed;inset:0;overflow:hidden;touch-action:pan-y}
 /* Blur is one animated number per product: --p (0 = sharp ... 1 = fully blurred) and --h (0 = hidden, 1 = shown).
@@ -46,13 +46,25 @@ header a{transition:color .15s}header a.on{color:var(--fg)}header a:hover{color:
 .chip{display:inline-block;border:1px solid var(--line);padding:5px 9px;font-size:12px;color:#444;margin-bottom:18px}
 .panel p{color:var(--mute);font-size:13px;line-height:1.6;margin-bottom:22px}
 .add{width:100%;display:flex;justify-content:space-between;align-items:center;background:var(--fg);color:var(--bg);border:0;border-radius:6px;padding:20px 18px;font-family:var(--mono);font-size:13px;cursor:pointer;transition:background .2s}
-.add:hover{background:var(--accent)}
 .add s{opacity:.55;margin-right:10px;font-size:13px}.add b{font-weight:700}
 
 .pager{position:fixed;z-index:20;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:6px;background:#fff;border-radius:30px;padding:4px}
 .pager span{cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;color:var(--mute)}
-.pager span{transition:color .15s}.pager span:hover{background:var(--bg);color:var(--accent)}
+.pager span{transition:color .15s}
 .pager em{font-style:normal;padding:0 8px}
+/* back arrow: its own white circle just left of the pager (absolute, so ‹ n of n › never shifts); only on the version screen */
+.pager span.bk{position:absolute;right:calc(100% + 8px);top:0;width:40px;height:40px;background:#fff;opacity:0;pointer-events:none;transition:opacity .3s,color .15s,background .15s}
+.cfg .pager span.bk{opacity:1;pointer-events:auto}
+
+/* hover colours only where a real pointer exists, so taps on a phone don't leave buttons stuck orange */
+@media (hover:hover){
+  header a:hover{color:var(--accent)!important}
+  .cart:hover{background:var(--accent);color:#fff!important}
+  .tree span:hover{color:var(--accent)!important}
+  .add:hover{background:var(--accent)}
+  .pager span:hover{background:var(--bg);color:var(--accent)}
+  .pager span.bk:hover{background:var(--bg)}
+}
 
 @media (max-width:700px){
   header{padding:12px 16px}.l,.r{gap:14px}.hide-m{display:none}
