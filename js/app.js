@@ -39,6 +39,44 @@ function draw(cv,p,kind){
   if(kind===0){c.font="13px 'JetBrains Mono',monospace";c.textAlign="right";c.fillStyle=p.tc;c.globalAlpha=.75;c.fillText(p.n,W/2-28,H/2-20);c.globalAlpha=1}
   if(kind===2){c.fillStyle="#d8d8cf";[[-.12,-.06,.1,.1],[.04,.02,.07,.07],[.13,-.07,.05,.05]].forEach(q=>c.fillRect(q[0]*W,q[1]*H,q[2]*W,q[3]*H))}
 }
+// Does this browser really blur with ctx.filter? (Safari/iOS: no, it is disabled by default.) Tested once by drawing.
+const NATIVE_BLUR=(()=>{try{
+  const t=document.createElement("canvas");t.width=t.height=9;const c=t.getContext("2d");
+  if(!("filter" in c))return false;
+  c.filter="blur(2px)";c.fillRect(3,3,3,3);
+  return c.getImageData(2,4,1,1).data[3]>0; // pixel just outside the square: only non-zero if it was blurred
+}catch(e){return false}})();
+// Software Gaussian blur (3 box passes) for browsers without ctx.filter. Works on premultiplied colour so edges stay clean.
+function boxSizes(sg,n){
+  let w=Math.floor(Math.sqrt(12*sg*sg/n+1));if(w%2===0)w--;
+  const m=Math.round((12*sg*sg-n*w*w-4*n*w-3*n)/(-4*w-4));
+  return Array.from({length:n},(_,i)=>((i<m?w:w+2)-1)/2); // box radii
+}
+function boxPass(a,t,w,h,r,vert){
+  const k=1/(2*r+1),st=vert?w*4:4,len=vert?h:w,lines=vert?w:h;
+  for(let l=0;l<lines;l++){
+    const o=vert?l*4:l*w*4;
+    for(let ch=0;ch<4;ch++){
+      let sum=0;
+      for(let i=0;i<=r&&i<len;i++)sum+=a[o+i*st+ch];
+      for(let i=0;i<len;i++){
+        t[o+i*st+ch]=sum*k;
+        if(i+r+1<len)sum+=a[o+(i+r+1)*st+ch];
+        if(i-r>=0)sum-=a[o+(i-r)*st+ch];
+      }
+    }
+  }
+}
+function softBlur(c,w,h,sg){
+  const im=c.getImageData(0,0,w,h),d=im.data,n=w*h*4;
+  let a=new Float32Array(n),t=new Float32Array(n);
+  for(let i=0;i<n;i+=4){const al=d[i+3]/255;a[i]=d[i]*al;a[i+1]=d[i+1]*al;a[i+2]=d[i+2]*al;a[i+3]=d[i+3]}
+  boxSizes(sg,3).forEach(r=>{boxPass(a,t,w,h,r,false);boxPass(t,a,w,h,r,true)}); // each pass ends back in a
+  for(let i=0;i<n;i+=4){const al=a[i+3]/255;
+    if(al>0){d[i]=a[i]/al;d[i+1]=a[i+1]/al;d[i+2]=a[i+2]/al}
+    d[i+3]=a[i+3]}
+  c.putImageData(im,0,0);
+}
 // blurred copies, baked once: LV steps from slightly to fully blurred (b is an array, b[0] = least blurred)
 function bake(b,s){
   b.forEach((cv,i)=>{
@@ -47,8 +85,8 @@ function bake(b,s){
     cv.style.width=s.style.width;cv.style.height=s.style.height;cv.style.marginLeft=s.style.marginLeft;cv.style.marginTop=s.style.marginTop;
     const c=cv.getContext("2d");c.clearRect(0,0,cv.width,cv.height);
     const full=Math.max(1.5,3.5*k*(s.width/parseFloat(s.style.width))), px=full*l/LV*r; // full = the old single blur amount
-    if("filter" in c){c.filter="blur("+px+"px)";c.drawImage(s,0,0,cv.width,cv.height);c.filter="none"}
-    else{const t=document.createElement("canvas"),f=Math.pow(2,l);t.width=Math.ceil(s.width/f);t.height=Math.ceil(s.height/f);const tc=t.getContext("2d");tc.imageSmoothingQuality="high";tc.drawImage(s,0,0,t.width,t.height);c.imageSmoothingQuality="high";c.drawImage(t,0,0,cv.width,cv.height)}
+    if(NATIVE_BLUR){c.filter="blur("+px+"px)";c.drawImage(s,0,0,cv.width,cv.height);c.filter="none"}
+    else{c.drawImage(s,0,0,cv.width,cv.height);softBlur(c,cv.width,cv.height,px)} // Safari/iOS: no ctx.filter
   });
 }
 // Kit / Hardware drawings for the current product. Heavy (draw + blur steps), so layout() prepares them in the
