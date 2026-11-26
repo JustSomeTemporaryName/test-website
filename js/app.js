@@ -205,7 +205,8 @@ stage.addEventListener("click",e=>{
 });
 let sx=null;
 stage.addEventListener("touchstart",e=>{sx=e.touches[0].clientX},{passive:true});
-stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40)step(dx<0?1:-1);sx=null});
+stage.addEventListener("touchend",e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40){const d=dx<0?1:-1;if(mode&&v+d<0)back();else step(d)} // swiping past Kit toward the product = "← All objects"
+  sx=null});
 let lock=false;
 stage.addEventListener("wheel",e=>{if(lock)return;const d=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(Math.abs(d)<12)return;lock=true;step(d>0?1:-1);setTimeout(()=>lock=false,500)},{passive:true});
 
